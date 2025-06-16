@@ -1,0 +1,38 @@
+{
+  "name": "@dbcode/vscode-types",
+  "version": "1.0.0",
+  "description": "TypeScript types for DBCode VSCode extension API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "vscode",
+    "extension",
+    "database",
+    "dbcode",
+    "types",
+    "typescript"
+  ],
+  "author": "Mike Burgh",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dbcodeio/dbcode-vscode-types.git"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/vscode": "^1.95.0"
+  },
+  "peerDependencies": {
+    "vscode": "*"
+  }
+}
