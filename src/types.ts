@@ -125,6 +125,8 @@ export interface ConnectionOperationResult {
   success: boolean;
   /** Error message if operation failed */
   error?: string;
+  /** IDs of the connections involved in the operation */
+  connectionIds?: string[];
 }
 
 
