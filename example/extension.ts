@@ -2,19 +2,21 @@
  * DBCode Integration Example
  * 
  * This example demonstrates how to integrate with the DBCode VSCode extension
- * using the @dbcode/vscode-types package for type safety.
+ * using the @dbcode/vscode-api package for type safety.
  * 
  * The example shows:
  * 1. How to connect to the DBCode extension API
  * 2. How to add single database connections
  * 3. How to remove database connections  
  * 4. How to add multiple connections at once
- * 5. Proper error handling patterns
+ * 5. How to reveal the DBCode explorer
+ * 6. How to reveal and select specific connections
+ * 7. Proper error handling patterns
  * 
  * To use this example:
  * 1. Ensure DBCode extension is installed
  * 2. Copy this file to your extension project
- * 3. Install @dbcode/vscode-types package
+ * 3. Install @dbcode/vscode-api package
  * 4. Register the commands in your package.json
  */
 
@@ -23,7 +25,7 @@ import {
   DBCodeAPI, 
   ConnectionConfig, 
   ConnectionOperationResult
-} from '@dbcode/vscode-types';
+} from '@dbcode/vscode-api';
 
 // Global variable to store the DBCode API instance
 let dbcodeAPI: DBCodeAPI | null = null;
@@ -107,11 +109,25 @@ function registerCommands(context: vscode.ExtensionContext) {
     addMultipleConnections
   );
 
+  // Command 4: Reveal DBCode explorer
+  const revealExplorerCommand = vscode.commands.registerCommand(
+    'dbcode-example.revealExplorer',
+    revealExplorer
+  );
+
+  // Command 5: Reveal and select a specific connection
+  const revealConnectionCommand = vscode.commands.registerCommand(
+    'dbcode-example.revealConnection',
+    revealSpecificConnection
+  );
+
   // Register all commands with VSCode for proper cleanup
   context.subscriptions.push(
     addConnectionCommand,
     removeConnectionCommand,
-    addMultipleCommand
+    addMultipleCommand,
+    revealExplorerCommand,
+    revealConnectionCommand
   );
 }
 
@@ -180,6 +196,10 @@ async function addSampleConnection() {
       vscode.window.showInformationMessage(
         `✅ Successfully added connection: ${connection.name}`
       );
+      
+      // Optionally reveal the newly added connection in the explorer
+      // This provides immediate visual feedback to the user
+      await dbcodeAPI.revealConnection(connection.connectionId);
     } else {
       // Handle API errors gracefully
       vscode.window.showErrorMessage(
@@ -302,6 +322,67 @@ async function addMultipleConnections() {
 }
 
 /**
+ * Example 4: Reveal DBCode Explorer
+ * 
+ * This function demonstrates how to reveal the DBCode explorer panel
+ * without selecting any specific connection.
+ */
+async function revealExplorer() {
+  if (!dbcodeAPI) {
+    vscode.window.showErrorMessage('DBCode API not available');
+    return;
+  }
+
+  try {
+    // Reveal the explorer without selecting any connection
+    const result: ConnectionOperationResult = await dbcodeAPI.revealConnection();
+
+    if (result.success) {
+      vscode.window.showInformationMessage('✅ DBCode explorer revealed successfully');
+    } else {
+      vscode.window.showErrorMessage(
+        `❌ Failed to reveal explorer: ${result.error || 'Unknown error'}`
+      );
+    }
+  } catch (error) {
+    vscode.window.showErrorMessage(`💥 Error revealing explorer: ${error}`);
+  }
+}
+
+/**
+ * Example 5: Reveal and Select Specific Connection
+ * 
+ * This function demonstrates how to reveal the DBCode explorer and
+ * automatically select and expand a specific connection.
+ */
+async function revealSpecificConnection() {
+  if (!dbcodeAPI) {
+    vscode.window.showErrorMessage('DBCode API not available');
+    return;
+  }
+
+  // For this example, we'll try to reveal the connection we created earlier
+  const connectionId = 'example-postgres-1';
+
+  try {
+    // Reveal the explorer and select the specific connection
+    const result: ConnectionOperationResult = await dbcodeAPI.revealConnection(connectionId);
+
+    if (result.success) {
+      vscode.window.showInformationMessage(
+        `✅ Connection '${connectionId}' revealed and selected in explorer`
+      );
+    } else {
+      vscode.window.showErrorMessage(
+        `❌ Failed to reveal connection '${connectionId}': ${result.error || 'Connection may not exist'}`
+      );
+    }
+  } catch (error) {
+    vscode.window.showErrorMessage(`💥 Error revealing connection: ${error}`);
+  }
+}
+
+/**
  * Additional Notes for Implementation:
  * 
  * 1. Connection IDs must be unique across all connections
@@ -327,6 +408,14 @@ async function addMultipleConnections() {
  *     {
  *       "command": "dbcode-example.addMultipleConnections",
  *       "title": "Add Multiple Connections"
+ *     },
+ *     {
+ *       "command": "dbcode-example.revealExplorer",
+ *       "title": "Reveal DBCode Explorer"
+ *     },
+ *     {
+ *       "command": "dbcode-example.revealConnection",
+ *       "title": "Reveal Specific Connection"
  *     }
  *   ]
  * }

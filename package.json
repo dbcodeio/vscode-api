@@ -1,7 +1,7 @@
 {
-  "name": "@dbcode/vscode-types",
-  "version": "1.0.0",
-  "description": "TypeScript types for DBCode VSCode extension API",
+  "name": "@dbcode/vscode-api",
+  "version": "1.1.0",
+  "description": "DBCode API in VSCode",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -26,7 +26,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dbcodeio/dbcode-vscode-types.git"
+    "url": "https://github.com/dbcodeio/vscode-api.git"
   },
   "devDependencies": {
     "typescript": "^5.0.0",

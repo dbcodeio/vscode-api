@@ -145,4 +145,11 @@ export interface DBCodeAPI {
    * @returns Promise resolving to operation result
    */
   removeConnections(connectionIds: string[]): Promise<ConnectionOperationResult>;
+
+  /**
+   * Reveal the DBCode explorer tree view and optionally select/expand a connection
+   * @param connectionId Optional connection ID to find, select and expand in the explorer
+   * @returns Promise resolving to operation result
+   */
+  revealConnection(connectionId?: string): Promise<ConnectionOperationResult>;
 }

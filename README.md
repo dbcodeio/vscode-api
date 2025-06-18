@@ -1,11 +1,11 @@
-# @dbcode/vscode-types
+# @dbcode/vscode-api
 
 TypeScript types for integrating with the DBCode VSCode extension API. This package provides type definitions that allow other VSCode extensions to safely interact with DBCode's database connection management features.
 
 ## Installation
 
 ```bash
-npm install @dbcode/vscode-types
+npm install @dbcode/vscode-api
 ```
 
 ## Overview
@@ -14,7 +14,13 @@ DBCode is a VSCode extension for database management. This types package allows 
 
 - Add database connections programmatically
 - Remove database connections
+- Reveal and navigate to connections in the DBCode explorer
 - Manage connection configurations with full type safety
+
+The API provides three main methods:
+- `addConnections()` - Add one or more database connections
+- `removeConnections()` - Remove connections by ID  
+- `revealConnection()` - Show the explorer and optionally select a connection
 
 ## Core Types
 
@@ -65,6 +71,7 @@ Main API for connection management:
 interface DBCodeAPI {
   addConnections(connections: ConnectionConfig[]): Promise<ConnectionOperationResult>;
   removeConnections(connectionIds: string[]): Promise<ConnectionOperationResult>;
+  revealConnection(connectionId?: string): Promise<ConnectionOperationResult>;
 }
 ```
 
@@ -74,7 +81,7 @@ See the [example extension file](./example/extension.ts) for a complete, comment
 
 ```typescript
 import * as vscode from 'vscode';
-import { DBCodeAPI, ConnectionConfig } from '@dbcode/vscode-types';
+import { DBCodeAPI, ConnectionConfig } from '@dbcode/vscode-api';
 
 export async function activate(context: vscode.ExtensionContext) {
   // Get DBCode API
@@ -102,6 +109,9 @@ export async function activate(context: vscode.ExtensionContext) {
   const result = await dbcodeAPI.addConnections([connection]);
   if (result.success) {
     vscode.window.showInformationMessage('Connection added successfully!');
+    
+    // Reveal the connection in the explorer
+    await dbcodeAPI.revealConnection('my-postgres-db');
   }
 }
 ```
@@ -111,7 +121,13 @@ export async function activate(context: vscode.ExtensionContext) {
 ### Connection Management
 - **Add Connections**: Add single or multiple connections with automatic deduplication
 - **Remove Connections**: Remove connections by ID
+- **Reveal Explorer**: Show the DBCode explorer and optionally select/expand a specific connection
 - **Update Existing**: Connections with existing IDs are updated, not duplicated
+
+### Explorer Navigation
+- **Show Explorer**: Reveal the DBCode tree view panel
+- **Connection Selection**: Automatically find and select a connection by ID
+- **Auto Expansion**: Expand the selected connection to show its database structure
 
 ### Type Safety
 - Full TypeScript support with comprehensive type definitions
@@ -145,6 +161,40 @@ const connection: ConnectionConfig = {
 };
 ```
 
+## Explorer Navigation
+
+### Revealing Connections
+
+Use `revealConnection()` to show the DBCode explorer and navigate to specific connections:
+
+```typescript
+// Reveal the explorer without selecting any specific connection
+await dbcodeAPI.revealConnection();
+
+// Reveal and select a specific connection by ID
+await dbcodeAPI.revealConnection('my-connection-id');
+
+// Complete example with error handling
+const result = await dbcodeAPI.revealConnection('production-db');
+if (result.success) {
+  console.log('Explorer revealed and connection selected');
+} else {
+  console.error('Failed to reveal connection:', result.error);
+}
+```
+
+**Behavior:**
+- **Without connection ID**: Shows the DBCode explorer panel in the sidebar
+- **With connection ID**: Shows the explorer, finds the connection, selects it, and expands it to show databases/tables
+- **Invalid connection ID**: Returns an error in the operation result but still reveals the explorer
+- **Explorer Focus**: The explorer panel will receive focus when revealed
+
+**Use Cases:**
+- Guide users to database connections after adding them
+- Deep-link to specific connections from other parts of your extension
+- Help users locate connections quickly in large connection lists
+- Provide navigation shortcuts in your extension's UI
+
 ## Error Handling
 
 All API methods return `ConnectionOperationResult` with success/error information:
@@ -171,5 +221,5 @@ MIT - see LICENSE file for details.
 ## Support
 
 For issues and questions:
-- File an issue on the [GitHub repository](https://github.com/dbcodeio/vscode-types)
+- File an issue on the [GitHub repository](https://github.com/dbcodeio/vscode-api)
 - Check the [DBCode extension documentation](https://dbcode.io/docs)

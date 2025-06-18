@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Build script for @dbcode/vscode-types
+# Build script for @dbcode/vscode-api
 
-echo "🔧 Building @dbcode/vscode-types..."
+echo "🔧 Building @dbcode/vscode-api..."
 
 # Clean previous build
 echo "🧹 Cleaning previous build..."
