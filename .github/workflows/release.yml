@@ -1,0 +1,121 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      custom_version:
+        description: 'Custom version (overrides version_type if provided)'
+        required: false
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build package
+        run: npm run build
+
+      - name: Run tests (if any)
+        run: npm test --if-present
+
+      - name: Check TypeScript types
+        run: npx tsc --noEmit
+
+      - name: Verify dist directory
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "Error: dist directory not found"
+            exit 1
+          fi
+          if [ ! -f "dist/index.js" ]; then
+            echo "Error: dist/index.js not found"
+            exit 1
+          fi
+          if [ ! -f "dist/index.d.ts" ]; then
+            echo "Error: dist/index.d.ts not found"
+            exit 1
+          fi
+          echo "Build verification successful!"
+
+      - name: Check package contents
+        run: npm pack --dry-run
+
+      - name: Bump version (custom)
+        if: github.event.inputs.custom_version != ''
+        run: |
+          npm version ${{ github.event.inputs.custom_version }} --no-git-tag-version
+          echo "NEW_VERSION=${{ github.event.inputs.custom_version }}" >> $GITHUB_ENV
+
+      - name: Bump version (automatic)
+        if: github.event.inputs.custom_version == ''
+        run: |
+          NEW_VERSION=$(npm version ${{ github.event.inputs.version_type }} --no-git-tag-version)
+          echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
+
+      - name: Commit version bump
+        run: |
+          git add package.json
+          git commit -m "Bump version to ${NEW_VERSION}"
+
+      - name: Create and push tag
+        run: |
+          git tag ${NEW_VERSION}
+          git push origin main --tags
+
+      - name: Publish to NPM
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.NEW_VERSION }}
+          release_name: Release ${{ env.NEW_VERSION }}
+          body: |
+            Release ${{ env.NEW_VERSION }}
+            
+            ## Changes
+            - Package published to NPM: https://www.npmjs.com/package/@dbcode/vscode-api
+            
+            ## Installation
+            ```bash
+            npm install @dbcode/vscode-api@${{ env.NEW_VERSION }}
+            ```
+          draft: false
+          prerelease: false
